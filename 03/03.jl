@@ -11,9 +11,9 @@ function get_largest(line::String)::Vector{Char}
     [line[first_max], line[first_max+1:end][second_max]]
 end
 
-tuple_int(vec)::Int = parse(Int, String(vec))
+char_vec_to_int(vec)::Int = parse(Int, String(vec))
 
-sum(tuple_int.(get_largest.(input)))
+sum(char_vec_to_int.(get_largest.(input)))
 
 
 # Second part
@@ -30,4 +30,4 @@ function get_largest_generic(line::String, c::Int)::Vector{Char}
         [maximum(line)]
     end
 end
-sum(tuple_int.(get_largest_generic.(input, 12)))
+sum(char_vec_to_int.(get_largest_generic.(input, 12)))
