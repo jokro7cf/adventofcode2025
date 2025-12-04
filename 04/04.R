@@ -1,5 +1,4 @@
 input_raw <- readLines("04/input")
-"@." == "@_"
 mx <- do.call(rbind, purrr::map(strsplit(input_raw, split = ""), \(row) matrix(row, nrow = 1)))
 
 find_accessible <- function(mx) {
