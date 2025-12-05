@@ -51,8 +51,10 @@ function find_fresh(ids, fresh_ids)::Vector{Bool}
     end
     fresh
 end
+# Part one
 sum(find_fresh(sorted_ids, remove_overlap(sorted_fresh_ids)))
 
+# Part two
 sum(map(remove_overlap(sorted_fresh_ids)) do tup
     tup[2] - tup[1] + 1
 end)
