@@ -1,11 +1,3 @@
-function get_ranges_str()
-    ranges::Vector{Tuple{Int, Int}} = []
-    for line::String in eachline("05/input")
-        s = split(line, '-')
-        push!(ranges, (parse(Int, s[1]), parse(Int, s[2])))
-    end
-    ranges
-end
 function parse_ranges(ranges::Vector{String})::Vector{Tuple{Int, Int}}
     map(ranges) do range
         s = split(range, '-')
