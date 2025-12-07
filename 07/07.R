@@ -1,14 +1,13 @@
 input_raw <- readLines("07/input")
 # Part 1
 
-# Interpret the input as one big charachter matrix
+# Interpret the input as one big character matrix
 mx <- do.call(rbind, purrr::map(strsplit(input_raw, split = ""), \(row) matrix(row, nrow = 1)))
 
 fill_beams <- function(mx) {
     splits <- 0
     # Skip the first row
     for (row in seq_len(nrow(mx) - 1) + 1) {
-        print(mx[row, ])
         for (col in seq_len(ncol(mx))) {
             if (mx[row - 1, col] == "S") {
                 mx[row, col] <- "|"
@@ -49,7 +48,8 @@ res$count
 # }
 # follow_beam_paths(mx)
 
-# Calculate the number of paths, "bottom up"
+# Calculate the number of paths,
+# Store counts in a table we fill "bottom up"
 calculate_path_possibilities <- function(mx) {
     paths <- matrix(0L, nrow(mx), ncol(mx))
     paths[nrow(mx), ] <- 1
@@ -58,8 +58,6 @@ calculate_path_possibilities <- function(mx) {
         # First scan: the empty cells
         for (col in seq_len(ncol(mx))) {
             if (mx[row, col] %in% c("S", ".")) {
-                cat("row =", row, ", col = ", col, "\n")
-                print(paths[row + 1, col])
                 paths[row, col] <- paths[row + 1, col]
             }
         }
