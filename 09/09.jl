@@ -26,6 +26,7 @@ function area(mx, a, b)::Int
     prod(abs.(mx[a, :] - mx[b,:]) .+1)
 end
 
+"""Simply test all possible rectangles"""
 function get_max_area_part1(mx)
     max_area = 0
     for row in eachrow(mx)
@@ -79,6 +80,7 @@ function get_rectangle(mx, a, b)
     rec_x, rec_y
 end
 
+"""Test whether no edge crosses the rectangle"""
 function no_edge_inside(mx, a, b)::Bool
     prev = size(mx, 1)
     rec_x, rec_y, = get_rectangle(mx, a, b)
@@ -91,6 +93,7 @@ function no_edge_inside(mx, a, b)::Bool
     return true
 end
 
+"""area = 0 for invalid rectangles and their area otherwise"""
 function valid_rec(mx, a, b)::Int
     if no_edge_inside(mx, a, b)
         area(mx, a, b)
