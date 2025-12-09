@@ -51,6 +51,9 @@ function connect(mx, max_n = 1000)
     end
     (circuit_nr, connections)
 end
+# Alternative, instead of sorting the distance once
+# in each iteration find the min distance with a scan and set to a high value
+# Much slower...
 # function connect(mx, max_n = 1000)
 #     distances = LinearAlgebra.LowerTriangular(pairwise_distance(mx))
 #     MAX = typemax(typeof(distances[1, 1]))
