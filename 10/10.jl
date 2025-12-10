@@ -43,7 +43,7 @@ end
 machines = read_input()
 
 LightState = Tuple{BitVector, Int}
-# Breadth first traversal, slow but not too slow
+# Breadth first traversal, simple and slow but not too slow
 function solve_lights(machine::Machine)::Int
     target_lights = machine.lights
     stack = Deque{LightState}()
@@ -64,31 +64,7 @@ end
 # ~ 80 secs. Could be sped up like part two
 @time sum(solve_lights.(machines))
 
-# Part 2
-JoltageState = Tuple{Vector{Int16}, Int}
-"""Breadth first traversal again, but this time it's too slow"""
-function solve_joltage(machine::Machine)::Int
-    target_jolt = machine.joltage
-    stack = Deque{JoltageState}()
-    push!(stack, (zeros(length(target_jolt)), 0))
-    while true
-        (jolt, button_presses) = popfirst!(stack)
-        for button in machine.buttons
-            new_jolt = copy(jolt)
-            new_jolt[button] = new_jolt[button] .+ 1
-            if new_jolt == target_jolt
-                return button_presses + 1
-            end
-            # Check if it's still reachable
-
-            if !any(new_jolt > target_jolt) 
-                push!(stack, (new_jolt, button_presses + 1))
-            end
-        end
-    end
-end
-# Too slow
-# sum(solve_joltage.(machines))
+# Part 2 solved with integer linear programming 
 
 """Solve using integer linear programming"""
 function solve_joltage_milp(machine::Machine)
@@ -113,3 +89,28 @@ function solve_joltage_milp(machine::Machine)
 end
 
 sum(solve_joltage_milp.(machines))
+
+JoltageState = Tuple{Vector{Int16}, Int}
+"""Breadth first traversal again, but this time it's too slow"""
+function solve_joltage(machine::Machine)::Int
+    target_jolt = machine.joltage
+    stack = Deque{JoltageState}()
+    push!(stack, (zeros(length(target_jolt)), 0))
+    while true
+        (jolt, button_presses) = popfirst!(stack)
+        for button in machine.buttons
+            new_jolt = copy(jolt)
+            new_jolt[button] = new_jolt[button] .+ 1
+            if new_jolt == target_jolt
+                return button_presses + 1
+            end
+            # Check if it's still reachable
+
+            if !any(new_jolt > target_jolt) 
+                push!(stack, (new_jolt, button_presses + 1))
+            end
+        end
+    end
+end
+# Too slow
+# sum(solve_joltage.(machines))
