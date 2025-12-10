@@ -11,7 +11,7 @@ mx_ex = reduce(vcat, transpose.(get_junctions_vec("09/example_input")))
 function pairwise_distance(m)
     rows = size(m, 1)
     area = ones(Int, rows, rows)
-    for dim in 1:size(m, 2)
+    for dim in axes(m, 2)
         b = abs.(pairwise_diff(m[:,dim])) .+1
         area *= b
     end
@@ -84,7 +84,7 @@ end
 function no_edge_inside(mx, a, b)::Bool
     prev = size(mx, 1)
     rec_x, rec_y, = get_rectangle(mx, a, b)
-    for cur in 1:size(mx, 1)
+    for cur in axes(mx, 1)
         if edge_in_rec(mx[prev, :], mx[cur, :], rec_x, rec_y)
             return false
         end
@@ -112,12 +112,15 @@ function get_max_area(mx)
             end
         end
     end
-    res = zeros(Int, size(combinations))
+    max_ar, indices = 0, (0, 0)
     for i in eachindex(combinations)
-        res[i] = valid_rec(mx, combinations[i][1], combinations[i][2])
+        a, b = combinations[i]
+        if area(mx, a, b) > max_ar && no_edge_inside(mx, a, b)
+            max_ar = area(mx, a, b)
+            indices = (a, b)
+        end
     end
-    ind = argmax(res)
-    (res[ind], combinations[ind])
+    return (max_ar, indices)
 end
 # example
 @show get_max_area(mx_ex)
