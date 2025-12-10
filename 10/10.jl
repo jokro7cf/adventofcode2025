@@ -69,6 +69,9 @@ end
 """Solve using integer linear programming"""
 function solve_joltage_milp(machine::Machine)
     target_jolt = machine.joltage
+    # constrain matrix
+    # each row is for one joltage input
+    # each col is one of the buttons
     mx = falses(length(target_jolt), length(machine.buttons))
     for button_i in eachindex(machine.buttons)
         mx[machine.buttons[button_i], button_i] .= 1
