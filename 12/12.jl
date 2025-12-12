@@ -135,7 +135,7 @@ end
 
 (shapes, trees) = read_input()
 
-# Actually it's enough to do the volume check.
+# Actually for THIS input it's enough to do the volume check.
 # This is only reasonable fast because all the infeasible 
 # trees also dont pass the volume check.
 # The feasible trees are solved quickly
