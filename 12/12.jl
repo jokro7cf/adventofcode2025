@@ -73,6 +73,10 @@ function conflicts(mx, i, j, mx_other)::Bool
     any(mx[range_x, range_y] .& mx_other)
 end
 
+function place(mx, i, j, mx_other)
+    place!(copy(mx), i, j, mx_other)
+end
+
 function place!(mx, i, j, mx_other)
     range_x, range_y = get_ranges(i, j, mx_other)
     mx[range_x, range_y] .= mx[range_x, range_y] .| mx_other
@@ -115,6 +119,91 @@ function place_presents(mx::BitMatrix, presents::Vector{Int}, shapes::Vector{Sha
     return false
 end
 
+function place_dp(dims::Tuple{Int, Int}, presents::Vector{Int}, shapes::Vector{Shape})::Vector{BitMatrix}
+    function place_present(mx::BitMatrix, ind::Int)::Vector{BitMatrix}
+        sols::Vector{BitMatrix} = []
+        for variant in shapes[ind]
+            for i in axes(mx, 1)
+                for j in axes(mx, 2)
+                    if fits(mx, i, j, variant) && !conflicts(mx, i, j, variant)
+                        push!(sols, place(mx, i, j, variant))
+                    end
+                end
+            end
+        end
+        sols
+    end
+
+    function calculate(dims::Tuple{Int, Int}, presents::Vector{Int})::Vector{BitMatrix}
+        yield()
+        #println("Calculating for $dims $presents")
+        #sleep(1)
+        sols::Vector{BitMatrix} = []
+        begin
+            #pres = copy(presents)
+            # Any with one less present and then adding the missing present
+            for index in findall(presents .> 0)
+                pres = copy(presents)
+                pres[index] -=1
+                solutions = lookup_or_calc(dims, pres)
+                placed_possibiles = Iterators.flatten(map(sol -> place_present(sol, index), solutions))
+                sols = append!(sols, placed_possibiles)
+            end
+        end
+        # And any with one area less
+        (x,y) = dims
+        mxs = lookup_or_calc((x-1, y), presents)
+        zero_row = falses(1, y)
+        for mx in mxs
+            push!(sols, vcat(zero_row, mx))
+            push!(sols, vcat(mx, zero_row))
+        end
+        mxs = lookup_or_calc((x, y-1), presents)
+        zero_row = falses(x, 1)
+        for mx in mxs
+            push!(sols, hcat(zero_row, mx))
+            push!(sols, hcat(mx, zero_row))
+        end
+        sols
+    end
+
+    dp_matrix::Dict{Tuple{Tuple{Int, Int}, Vector{Int}}, Vector{BitMatrix}} = Dict{Tuple{Tuple{Int, Int}, Vector{Int}}, Vector{BitMatrix}}()
+
+    function lookup_or_calc(dims::Tuple{Int, Int}, presents::Vector{Int})::Vector{BitMatrix}
+        # Base case
+        if all(presents .== 0)
+            return [falses(dims)]
+        end
+        if any(dims .== 0)
+            return []
+        end
+        vols = vol.(shapes)
+        needed_vol = sum(presents .* vols)
+        if prod(dims) < needed_vol
+            return []
+        end
+        get!(dp_matrix, (dims, presents)) do 
+            calculate(dims, presents)
+        end
+    end
+
+    function fill_dp_with_all_presents(dims, presents)
+        for highest in 1:maximum(presents)
+            pres = copy(presents)
+            @show pres[pres .> highest] .= highest
+            dp_matrix[(dims, pres)] = calculate(dims, pres)
+        end
+    end
+
+    for width in 1:dims[1]
+        for height in 1:dims[1]
+            println((width, height))
+            fill_dp_with_all_presents((width, height), presents)
+        end
+    end
+    dp_matrix[(dims, presents)]
+end
+
 vol(shape) = sum(shape[1])
 
 function vol_check(mx, presents, shapes::Vector{Shape})
@@ -132,6 +221,7 @@ end
 # Example
 # ex_shapes, tree_ex = read_input("12/example_input")
 # solve(tree_ex[3], ex_shapes)
+# place_dp(tree_ex[1].size, tree_ex[1].presents, ex_shapes)
 
 (shapes, trees) = read_input()
 
