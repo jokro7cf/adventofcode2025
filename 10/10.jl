@@ -1,4 +1,5 @@
 using DataStructures, JuMP, Cbc
+import Memoization, Combinatorics
 struct Machine
     lights::BitVector
     buttons::Vector{Vector{Int16}}
@@ -58,6 +59,7 @@ function solve_lights(machine::Machine)::Int
             end
             push!(stack, (new_lights, button_presses + 1))
         end
+        yield()
     end
 end
 
@@ -91,11 +93,49 @@ function solve_joltage_milp(machine::Machine)
     sum(value.(x))
 end
 
-sum(solve_joltage_milp.(machines))
+# 0.2 sec
+@time sum(solve_joltage_milp.(machines))
+
+
+# Solution from https://www.reddit.com/r/adventofcode/comments/1pk87hl/2025_day_10_part_2_bifurcate_your_way_to_victory/
+function binary_buttons_matrix(machine::Machine)::Tuple{AbstractMatrix{Int16}, Vector{Int16}}
+    button_presses::Vector{Int16} = zeros(2^length(machine.buttons))
+    results = zeros(Int16, 2^length(machine.buttons), length(machine.joltage))
+    for (i, buttons) in Iterators.enumerate(Combinatorics.powerset(1:length(machine.buttons)))
+        button_presses[i] = length(buttons)
+        for button in machine.buttons[buttons]
+            results[i, button] .+= 1
+        end
+    end
+    return (results, button_presses)
+end
+
+# If the target joltage contains uneven values, they must have come from 
+# one of the combinations of pressing each button 0 or 1 times
+# We can subtract that, div by 2 (all are even) and recurse
+function solve_joltage_rec(machine::Machine)::Int16
+    effects, counts = binary_buttons_matrix(machine)
+    Memoization.@memoize Dict function find_min_presses_inner(target)::Int16
+        @assert length(target) == size(effects, 2)
+        if all(target .== 0) 
+            return 0
+        end
+        min_counts = typemax(Int16)
+        results = target' .- effects
+        valid = all((results .% 2 .== 0) .& (results .>= 0); dims = 2)[:, 1]
+        for ind in findall(valid)
+            min_counts = min(min_counts, counts[ind] + 2 * find_min_presses_inner(results[ind, :] .÷ 2))
+        end
+        return min_counts
+    end
+    find_min_presses_inner(machine.joltage)
+end
+# ~1.5 sec
+@time sum(solve_joltage_rec.(machines))
 
 JoltageState = Tuple{Vector{Int16}, Int}
 """Breadth first traversal again, but this time it's too slow"""
-function solve_joltage(machine::Machine)::Int
+function solve_joltage_bft(machine::Machine)::Int
     target_jolt = machine.joltage
     stack = Deque{JoltageState}()
     push!(stack, (zeros(length(target_jolt)), 0))
@@ -116,4 +156,4 @@ function solve_joltage(machine::Machine)::Int
     end
 end
 # Too slow
-# sum(solve_joltage.(machines))
+# sum(solve_joltage_bft.(machines))
